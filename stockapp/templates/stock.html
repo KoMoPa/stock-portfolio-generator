@@ -14,15 +14,17 @@
                 </tr>
             </thead>
             <tbody>
+                {% for stock in stocks %}
                 <tr>
-                    <td>{{ date }}</td>
-                    <td>{{ symbol }}</td>
-                    <td>${{ open_price|floatformat:2 }}</td>
-                    <td>${{ close_price|floatformat:2 }}</td>
-                    <td>${{ high_price|floatformat:2 }}</td>
-                    <td>${{ low_price|floatformat:2 }}</td>
-                    <td>{{ volume|floatformat:0 }}</td>
+                    <td>{{ stock.date }}</td>
+                    <td>{{ stock.symbol }}</td>
+                    <td>${{ stock.open_price|floatformat:2 }}</td>
+                    <td>${{ stock.close_price|floatformat:2 }}</td>
+                    <td>${{ stock.high_price|floatformat:2 }}</td>
+                    <td>${{ stock.low_price|floatformat:2 }}</td>
+                    <td>{{ stock.volume|floatformat:0 }}</td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

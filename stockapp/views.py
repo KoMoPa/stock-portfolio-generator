@@ -26,9 +26,32 @@ load_dotenv()
 
 def home(request):
     """Home Page"""
-    data = get_data(request, inclusion=True)
-    print('home page data', data)
-    return render(request, 'home.html', data)
+    stocks = [fetch_stock('AAPL'), fetch_stock('GOOG'), fetch_stock('AMZN')]
+    context = {
+        'stocks': stocks,
+        'success': True if stocks else False
+    }
+    return render(request, 'home.html', context)
+
+
+def alpha_vantage_status(request):
+    """Check Alpha Vantage API status for rate limiting."""
+    api_key = os.environ.get('STOCK_API_KEY', '')
+    # Use a common symbol for a lightweight test
+    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=IBM&apikey={api_key}'
+    response = requests.get(url, timeout=10)
+    data = response.json()
+
+    if 'Note' in data:
+        status = "API limit reached: " + data['Note']
+    elif 'Information' in data:
+        status = "API info: " + data['Information']
+    elif 'Error Message' in data:
+        status = "API error: " + data['Error Message']
+    else:
+        status = "API is working. No rate limit detected."
+
+    return HttpResponse(status)
 
 
 def simple_plot(request):
@@ -91,58 +114,66 @@ def stock_chart(request):
     # return render(request, 'plot_example.html', context)
 
 
-def get_data(request, inclusion=True):
-    """simple polygon pull"""
-    data = {}
+def fetch_stock(symbol):
+    """Fetch daily stock data for a given symbol."""
     api_key = os.environ.get('STOCK_API_KEY', '')
-    # api_key = 'buttfarts'
-    symbol = 'AAPL'
-
     url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}'
-    # print(url)
-
     response = requests.get(url, timeout=10)
     data = response.json()
 
-    # run with the backup stock.json file if the api call doesn't work
     if 'Information' in data:
-        json_file = os.path.join(settings.BASE_DIR, 'stock.json')
-        try:
-            with open(json_file, 'r', encoding='utf-8') as file:
-                data = json.load(file)
-                # print('file pulled successfully')
-        except FileNotFoundError:
-            data = {'error': 'file not found, url not run'}
-            # print('file not pulled')
+        # fallback logic...
+        return {'symbol': symbol, 'error': 'API limit or error.'}
 
     meta_data = data.get('Meta Data', {})
-    symbol = meta_data.get('2. Symbol', 'Unknown')
+    symbol = meta_data.get('2. Symbol', symbol)
     time_series = data.get('Time Series (Daily)', {})
+    if not time_series:
+        return {'symbol': symbol, 'error': 'No data'}
     today = next(iter(time_series))
     latest_data = time_series[today]
-    open_price = float(latest_data.get('1. open', 0))
-    close_price = float(latest_data.get('4. close', 0))
-    high_price = float(latest_data.get('2. high', 0))
-    low_price = float(latest_data.get('3. low', 0))
-    volume = float(latest_data.get('5. volume', 0))
-
-    context = {
+    return {
         'symbol': symbol,
         'date': today,
-        'open_price': open_price,
-        'close_price': close_price,
-        'high_price': high_price,
-        'low_price': low_price,
-        'volume': volume,
-        # 'data': data,
+        'open_price': float(latest_data.get('1. open', 0)),
+        'close_price': float(latest_data.get('4. close', 0)),
+        'high_price': float(latest_data.get('2. high', 0)),
+        'low_price': float(latest_data.get('3. low', 0)),
+        'volume': float(latest_data.get('5. volume', 0)),
         'success': True,
     }
 
-    if inclusion:
-        return context
 
-    return render(request, 'stock.html', context)
+def stock_lookup(request):
+    symbol = request.GET.get('symbol', '').upper() or 'AAPL'
+    api_key = os.environ.get('STOCK_API_KEY', '')
+    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}'
+    response = requests.get(url, timeout=10)
+    data = response.json()
 
+    if 'Error Message' in data or 'Note' in data:
+        context = {'error': 'Invalid symbol or API limit reached.', 'symbol': symbol}
+    else:
+        print(data)
+        meta_data = data.get('Meta Data', {})
+        symbol = meta_data.get('2. Symbol', symbol)
+        time_series = data.get('Time Series (Daily)', {})
+        if not time_series:
+            context = {'error': 'No data found for this symbol.', 'symbol': symbol}
+        else:
+            today = next(iter(time_series))
+            latest_data = time_series[today]
+            context = {
+                'symbol': symbol,
+                'date': today,
+                'open_price': float(latest_data.get('1. open', 0)),
+                'close_price': float(latest_data.get('4. close', 0)),
+                'high_price': float(latest_data.get('2. high', 0)),
+                'low_price': float(latest_data.get('3. low', 0)),
+                'volume': float(latest_data.get('5. volume', 0)),
+                'success': True,
+            }
+    return render(request, 'stock_lookup.html', context)
 
 @login_required
 def dashboard(request):
