@@ -16,6 +16,7 @@ from django.views.generic import ListView
 from django.contrib.auth.decorators import login_required
 from dotenv import load_dotenv
 import pandas as pd
+import yfinance as yf
 
 from stockapp.forms import AccountForm
 from . import models, forms
@@ -263,3 +264,28 @@ class AccountListView(ListView):
     def get_queryset(self):
         #only for currently logged in users
         return models.Account.objects.filter(user=self.request.user)
+
+def portfolio_view(request):
+    # List of tickers you want to display
+    ticker_symbols = ["AAPL", "TSLA", "NVDA"]
+    
+    stocks_data = [] # This will hold the dictionaries for each stock
+
+    for symbol in ticker_symbols:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        
+        # Package only the data we need for each stock
+        stock_details = {
+            'symbol': symbol,
+            'name': info.get('longName', 'N/A'),
+            'price': info.get('currentPrice', 'N/A'),
+            'change': info.get('regularMarketChangePercent', 0),
+        }
+        stocks_data.append(stock_details)
+
+    context = {
+        'stocks': stocks_data  # Pass the entire list to the template
+    }
+    
+    return render(request, 'stock_list.html', context)

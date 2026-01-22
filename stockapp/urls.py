@@ -12,4 +12,6 @@ urlpatterns = [
     path('plot/', views.simple_plot, name='simpleplot'),
     path('stock-lookup/', views.stock_lookup, name='stocklookup'),
     path('api-status/', views.alpha_vantage_status, name='alpha_vantage_status'),
+    # ADDED THIS ONE PATH
+     path('portfolio/', views.portfolio_view, name='portfolio'),
 ]

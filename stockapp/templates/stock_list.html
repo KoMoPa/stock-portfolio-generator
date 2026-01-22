@@ -1,0 +1,35 @@
+{% block main %}
+
+{% for account in stockapp_accounts %}
+<p>{{account.account_type}}</p>
+<p>${{account.balance}}</p>
+{% endfor %}
+<h1>My Watchlist</h1>
+
+<table border="1">
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Company Name</th>
+            <th>Price</th>
+            <th>Change (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stock in stocks %}
+        <tr>
+            <td><strong>{{ stock.symbol }}</strong></td>
+            <td>{{ stock.name }}</td>
+            <td>${{ stock.price }}</td>
+            <td style="color: {% if stock.change >= 0 %}green{% else %}red{% endif %};">
+                {{ stock.change|floatformat:2 }}%
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No stocks found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
