@@ -19,6 +19,7 @@ import pandas as pd
 import yfinance as yf
 
 from stockapp.forms import AccountForm
+from .services import get_stock_data 
 from . import models, forms
 
 matplotlib.use('Agg')
@@ -145,36 +146,24 @@ def fetch_stock(symbol):
     }
 
 
+
+
 def stock_lookup(request):
     symbol = request.GET.get('symbol', '').upper() or 'AAPL'
-    api_key = os.environ.get('STOCK_API_KEY', '')
-    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}'
-    response = requests.get(url, timeout=10)
-    data = response.json()
+    
+    stock_info = get_stock_data(symbol)
 
-    if 'Error Message' in data or 'Note' in data:
-        context = {'error': 'Invalid symbol or API limit reached.', 'symbol': symbol}
+    if not stock_info:
+        context = {
+            'error': f'Could not find data for "{symbol}". Check the ticker and try again.',
+            'symbol': symbol
+        }
     else:
-        print(data)
-        meta_data = data.get('Meta Data', {})
-        symbol = meta_data.get('2. Symbol', symbol)
-        time_series = data.get('Time Series (Daily)', {})
-        if not time_series:
-            context = {'error': 'No data found for this symbol.', 'symbol': symbol}
-        else:
-            today = next(iter(time_series))
-            latest_data = time_series[today]
-            context = {
-                'symbol': symbol,
-                'date': today,
-                'open_price': float(latest_data.get('1. open', 0)),
-                'close_price': float(latest_data.get('4. close', 0)),
-                'high_price': float(latest_data.get('2. high', 0)),
-                'low_price': float(latest_data.get('3. low', 0)),
-                'volume': float(latest_data.get('5. volume', 0)),
-                'success': True,
-            }
+        context = stock_info
+        context['success'] = True
+
     return render(request, 'stock_lookup.html', context)
+
 
 @login_required
 def dashboard(request):
@@ -275,7 +264,8 @@ def portfolio_view(request):
     for symbol in ticker_symbols:
         ticker = yf.Ticker(symbol)
         info = ticker.info
-        
+       
+        print('info', info)
         # Package only the data we need for each stock
         stock_details = {
             'symbol': symbol,
