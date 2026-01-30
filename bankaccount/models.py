@@ -64,7 +64,7 @@ class Transaction(models.Model):
         (DEPOSIT, 'Deposit'),
         (WITHDRAWAL, 'Withdrawal'),
     ]
-    transaction_type = models.CharField(choices=TRANSACTION_TYPES)
+    transaction_type = models.CharField(choices=TRANSACTION_TYPES, default=DEPOSIT)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
     account = models.ForeignKey(

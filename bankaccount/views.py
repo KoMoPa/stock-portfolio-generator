@@ -31,7 +31,7 @@ def bank_account_create(request):
             messages.error(request, 'Please correct errors.')
     else:
         form = AccountForm()
-    return render(request, 'bankaccount/bank_account_form.html', {'form': form})
+    return render(request, 'account.html', {'form': form})
 
 
 @login_required
