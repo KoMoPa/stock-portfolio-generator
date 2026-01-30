@@ -20,7 +20,6 @@ from stockapp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path('', views.home, name='home'),
     path('', include('stockapp.urls')),
-   
+    path('bankaccount/', include('bankaccount.urls')),
 ]

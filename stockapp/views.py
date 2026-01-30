@@ -179,10 +179,11 @@ def stock_lookup(request):
 @login_required
 def dashboard(request):
     """User Dashboard"""
-    accounts = models.Account.objects.filter(user=request.user)
+    from bankaccount.models import BankAccount
+    bank_accounts = BankAccount.objects.filter(user=request.user)
     return render(request, 'dashboard.html', {
         'user': request.user,
-        'stockapp_accounts': accounts  # Add this line
+        'stockapp_accounts': bank_accounts
     })
 
 
