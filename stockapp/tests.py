@@ -24,3 +24,6 @@ if __name__ == "__main__":
     with sync_playwright() as playwright:
         test_default_stock_loads(playwright)
 
+
+
+
