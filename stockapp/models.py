@@ -8,7 +8,7 @@ class Account(models.Model):
 
     balance = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
 
-    account_type = models.CharField(max_length=20, choices=[('checking', 'Checking'), ('savings', 'Savings')], default='checking')
+    account_type = models.CharField(max_length=20, choices=[('1', 'Checking'), ('2', 'Savings')], default='checking')
 
     def __str__(self):
         return f"{self.user.username}'s Account: ${self.balance:,.2f}"
