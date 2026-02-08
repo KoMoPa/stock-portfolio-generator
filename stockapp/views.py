@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 import pandas as pd
 import yfinance as yf
 
+
 from stockapp.forms import AccountForm
 from .services import get_stock_data 
 from . import models, forms
