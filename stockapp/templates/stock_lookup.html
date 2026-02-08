@@ -1,22 +1,69 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Stock Ticker Lookup</h1>
-<form method="get">
-    <label for="symbol">Enter Stock Symbol:</label>
-    <input type="text" id="symbol" name="symbol" value="{{ symbol|default:'' }}" required>
-    <button type="submit">Lookup</button>
-</form>
+<div class="stock-lookup-container">
+    <h3 class="text-lg font-semibold mb-4">Stock Lookup</h3>
 
-{% if success %}
-<h2>Results for {{ symbol }} ({{ date }})</h2>
-<ul>
-    <li>Open: ${{ open_price }}</li>
-    <li>Close: ${{ close_price }}</li>
-    <li>High: ${{ high_price }}</li>
-    <li>Low: ${{ low_price }}</li>
-    <li>Volume: {{ volume }}</li>
-</ul>
-{% elif error %}
-<p style="color:red;">{{ error }}</p>
-{% endif %}
-{% endblock %}
+    <form id="stockLookupForm">
+        <div class="mb-4">
+            <label for="symbol" class="block text-sm font-medium text-gray-700">Stock Symbol</label>
+            <input type="text" name="symbol" id="symbol" placeholder="e.g., AAPL"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+        </div>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+            Lookup Stock
+        </button>
+    </form>
+
+    <div id="stockResults" class="mt-4"></div>
+</div>
+
+<script>
+    document.getElementById('stockLookupForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+        const resultsDiv = document.getElementById('stockResults');
+
+        if (!symbol) {
+            resultsDiv.innerHTML = '<div class="p-4 bg-red-50 rounded-md text-red-700">Please enter a stock symbol</div>';
+            return;
+        }
+
+        // Show loading state
+        resultsDiv.innerHTML = '<div class="p-4 bg-gray-50 rounded-md">Loading...</div>';
+
+        try {
+            const response = await fetch(`/api/stock-lookup/?symbol=${symbol}`);
+            const data = await response.json();
+
+            if (data.success && data.stock_info) {
+                const stock = data.stock_info;
+                resultsDiv.innerHTML = `
+                <div class="p-4 bg-green-50 rounded-md border border-green-200">
+                    <h4 class="text-xl font-bold text-gray-900 mb-2">${stock.name}</h4>
+                    <h3 class="text-base font-semibold text-gray-900 mb-2">${stock.symbol}</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div><span class="font-semibold">Current Price:</span> $${stock.current_price || 'N/A'}</div>
+
+                        <div><span class="font-semibold">Open Price:</span> $${stock.open || 'N/A'}</div>
+
+                        <div><span class="font-semibold">Close Price:</span>$${stock.close || 'N/A'}</div>
+
+                        <div><span class="font-semibold">52 Week Change:</span>${stock.fifty_two_week_change || 'N/A'}%</div>
+                    </div>
+                </div>
+            `;
+            } else {
+                resultsDiv.innerHTML = `
+                <div class="p-4 bg-red-50 rounded-md text-red-700">
+                    ${data.error || 'Failed to fetch stock data'}
+                </div>
+            `;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `
+            <div class="p-4 bg-red-50 rounded-md text-red-700">
+                Error connecting to server. Please try again.
+            </div>
+        `;
+        }
+    });
+</script>

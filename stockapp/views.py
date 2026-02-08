@@ -1,25 +1,26 @@
-import os
-import json
+"""views.py"""
+# import os
+# import json
 import io
 import base64
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import requests
-from django.conf import settings
+# import requests
+# from django.conf import settings
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.views import View
 from django.views.generic import ListView
 from django.contrib.auth.decorators import login_required
 from dotenv import load_dotenv
-import pandas as pd
+# import pandas as pd
 import yfinance as yf
-
+from bankaccount.models import BankAccount
 from stockapp.forms import AccountForm
-from .services import get_stock_data 
+from .services import get_stock_data
 from . import models, forms
 
 matplotlib.use('Agg')
@@ -28,7 +29,7 @@ load_dotenv()
 
 def home(request):
     """Home Page"""
-    stocks = [fetch_stock('AAPL'), fetch_stock('GOOG'), fetch_stock('AMZN')]
+    stocks = [('AAPL'), ('GOOG'), ('AMZN')]
     context = {
         'stocks': stocks,
         'success': True if stocks else False
@@ -36,31 +37,13 @@ def home(request):
     return render(request, 'home.html', context)
 
 
-def alpha_vantage_status(request):
-    """Check Alpha Vantage API status for rate limiting."""
-    api_key = os.environ.get('STOCK_API_KEY', '')
-    # Use a common symbol for a lightweight test
-    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=IBM&apikey={api_key}'
-    response = requests.get(url, timeout=10)
-    data = response.json()
-
-    if 'Note' in data:
-        status = "API limit reached: " + data['Note']
-    elif 'Information' in data:
-        status = "API info: " + data['Information']
-    elif 'Error Message' in data:
-        status = "API error: " + data['Error Message']
-    else:
-        status = "API is working. No rate limit detected."
-
-    return HttpResponse(status)
-
-
 def simple_plot(request):
+    """starter plot"""
     x = np.linspace(0, 2 * np.pi, 200)
     y = np.sin(x)
 
     fig, ax = plt.subplots()
+    print(fig)
     ax.plot(x, y)
     ax.set_title('Sine Wave')
     ax.set_xlabel('Z')
@@ -85,94 +68,66 @@ def simple_plot(request):
 
 
 def stock_chart(request):
-    # Get your stock data
-    data = get_data(request, inclusion=True)
-    
+    """starter stock chart"""
+    data = get_stock_data(request)
     if data.get('success'):
         # Create sample data for demonstration
         dates = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
         prices = [150.0, 152.5, 148.0, 155.0, data['close_price']]
-        
+
         fig, ax = plt.subplots(figsize=(10, 6))
+        print(fig)
         ax.plot(dates, prices, marker='o', linewidth=2)
         ax.set_title(f'{data["symbol"]} Stock Price')
         ax.set_ylabel('Price ($)')
         ax.grid(True, alpha=0.3)
-        
+
         # Save to base64
         buffer = io.BytesIO()
         plt.savefig(buffer, format='png', dpi=100, bbox_inches='tight')
         buffer.seek(0)
         image_png = buffer.getvalue()
         buffer.close()
-        
         graphic = base64.b64encode(image_png).decode('utf-8')
         plt.close()
-        
         context = {'graphic': graphic, 'symbol': data['symbol']}
     else:
         context = {'error': 'No stock data available'}
-    
-    # return render(request, 'plot_example.html', context)
+    return render(request, 'plot_example.html', context)
 
 
-def fetch_stock(symbol):
-    """Fetch daily stock data for a given symbol."""
-    api_key = os.environ.get('STOCK_API_KEY', '')
-    url = f'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={api_key}'
-    response = requests.get(url, timeout=10)
-    data = response.json()
-
-    if 'Information' in data:
-        # fallback logic...
-        return {'symbol': symbol, 'error': 'API limit or error.'}
-
-    meta_data = data.get('Meta Data', {})
-    symbol = meta_data.get('2. Symbol', symbol)
-    time_series = data.get('Time Series (Daily)', {})
-    if not time_series:
-        return {'symbol': symbol, 'error': 'No data'}
-    today = next(iter(time_series))
-    latest_data = time_series[today]
-    return {
-        'symbol': symbol,
-        'date': today,
-        'open_price': float(latest_data.get('1. open', 0)),
-        'close_price': float(latest_data.get('4. close', 0)),
-        'high_price': float(latest_data.get('2. high', 0)),
-        'low_price': float(latest_data.get('3. low', 0)),
-        'volume': float(latest_data.get('5. volume', 0)),
-        'success': True,
-    }
-
-
-
-
-def stock_lookup(request):
-    symbol = request.GET.get('symbol', '').upper() or 'AAPL'
-    
+def stock_lookup_ajax(request):
+    """API endpoint for stock lookup"""
+    symbol = request.GET.get('symbol', '').upper()
+    if not symbol:
+        return JsonResponse({'error': 'No symbol found.'})
     stock_info = get_stock_data(symbol)
-
     if not stock_info:
-        context = {
-            'error': f'Could not find data for "{symbol}". Check the ticker and try again.',
-            'symbol': symbol
-        }
-    else:
-        context = stock_info
-        context['success'] = True
-
-    return render(request, 'stock_lookup.html', context)
-
+        return JsonResponse({'error': f'No {symbol} data found.', 'success': False})
+    return JsonResponse({
+        'success': True,
+        'stock_info': stock_info
+    })
 
 @login_required
 def dashboard(request):
     """User Dashboard"""
-    from bankaccount.models import BankAccount
     bank_accounts = BankAccount.objects.filter(user=request.user)
+
+    symbol = request.GET.get('symbol', '').upper() or None
+    stock_info = {}
+    error = None
+    if symbol:
+        stock_info = get_stock_data(symbol)
+        if not stock_info:
+            error = f'Could not find data for "{symbol}".'
+
     return render(request, 'dashboard.html', {
         'user': request.user,
-        'stockapp_accounts': bank_accounts
+        'stockapp_accounts': bank_accounts,
+        'stock_info': stock_info,
+        'symbol': symbol, 
+        'error': error
     })
 
 
@@ -183,14 +138,21 @@ def logout_view(request):
 
 
 class LoginView(View):
+    """Login view"""
     def get(self, request):
+        """get form"""
         form = forms.LoginForm()
         return render(request, 'login.html', {'form': form})
 
     def post(self, request):
+        """create account"""
         form = forms.LoginForm(request.POST)
         if form.is_valid():
-            authenticated_user = authenticate(request, username=form.cleaned_data['username'], password=form.cleaned_data['password'])
+            authenticated_user = authenticate(
+                request,
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password']
+            )
             if authenticated_user:
                 login(request, authenticated_user)
                 return redirect('dashboard')
@@ -198,14 +160,20 @@ class LoginView(View):
 
 
 class RegisterView(View):
+    """register view"""
     def get(self, request):
+        """get the view"""
         form = forms.LoginForm()
         return render(request, 'register.html', {'form': form})
 
     def post(self, request):
+        """create account"""
         form = forms.LoginForm(request.POST)
         if form.is_valid():
-            user = User.objects.create_user(username=form.cleaned_data['username'], password=form.cleaned_data['password'])
+            user = User.objects.create_user(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password']
+            )
             if user:
                 login(request, user)
                 return redirect('dashboard')
@@ -214,11 +182,14 @@ class RegisterView(View):
 
 
 class AccountView(View):
+    """account view"""
     def get(self, request):
+        """get account"""
         form = forms.AccountForm()
         return render(request, 'account.html', {'form': form})
 
     def post(self, request):
+        """create account"""
         form = forms.AccountForm(request.POST)
         if form.is_valid():
             form.save()
@@ -226,6 +197,7 @@ class AccountView(View):
         return render(request, 'account.html', {'form': form})
 
     def account_form(self, request):
+        """account form"""
         if request.method == 'POST':
             form = forms.AccountForm(request.POST)
             if form.is_valid():
@@ -238,6 +210,7 @@ class AccountView(View):
 
 @login_required
 def addaccount(request):
+    """add an account"""
     if request.method == 'POST':
         form = AccountForm(request.POST)
         if form.is_valid():
@@ -249,6 +222,7 @@ def addaccount(request):
 
 
 class AccountListView(ListView):
+    """account list view"""
     model = models.Account
     context_object_name = 'stockapp_accounts'
     def get_queryset(self):
@@ -256,15 +230,15 @@ class AccountListView(ListView):
         return models.Account.objects.filter(user=self.request.user)
 
 def portfolio_view(request):
-    # List of tickers you want to display
+    """List of tickers you want to display"""
     ticker_symbols = ["AAPL", "TSLA", "NVDA"]
-    
+
     stocks_data = [] # This will hold the dictionaries for each stock
 
     for symbol in ticker_symbols:
         ticker = yf.Ticker(symbol)
         info = ticker.info
-       
+
         print('info', info)
         # Package only the data we need for each stock
         stock_details = {
@@ -278,5 +252,5 @@ def portfolio_view(request):
     context = {
         'stocks': stocks_data  # Pass the entire list to the template
     }
-    
+
     return render(request, 'stock_list.html', context)
