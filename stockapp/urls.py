@@ -9,9 +9,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('account/', views.addaccount, name='addaccount'),
     # path('plot/', views.stock_chart, name='simpleplot'),
-    path('plot/', views.simple_plot, name='simpleplot'),
-    path('stock-lookup/', views.stock_lookup, name='stocklookup'),
-    path('api-status/', views.alpha_vantage_status, name='alpha_vantage_status'),
-    # ADDED THIS ONE PATH
-     path('portfolio/', views.portfolio_view, name='portfolio'),
+    # path('plot/', views.simple_plot, name='simpleplot'),
+    # path('stock-lookup/', views.stock_lookup, name='stocklookup'),
+    # path('portfolio/', views.portfolio_view, name='portfolio'),
+    path('api/stock-lookup/', views.stock_lookup_ajax, name='stock_lookup_ajax'),
 ]
