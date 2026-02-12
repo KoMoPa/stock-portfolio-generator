@@ -13,7 +13,7 @@
             </svg>
         </div>
 
-        <div class="ml-4">
+        <div class="ml-4 flex-1">
             <h2 class="text-gray-600 text-sm font-medium tracking-wider capitalize">
                 {% if '1' in account.account_type %} Checking
                 {% elif '2' in account.account_type %} Savings
@@ -21,6 +21,15 @@
                 {% else %} {{ account.account_type }} {% endif %}
             </h2>
             <p class="text-2xl font-bold text-gray-800">${{ account.balance|intcomma }}</p>
+            <!-- ADD BUTTONS HERE -->
+            <div class="mt-4 flex gap-2">
+                <button class="flex-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors">
+                    Deposit
+                </button>
+                <button class="flex-1 px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded transition-colors">
+                    Withdraw
+                </button>
+            </div>
         </div>
     </div>
 </div>
