@@ -1,6 +1,7 @@
-{% load humanize %} {% for account in stockapp_accounts %}
-<div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 
-        {% if '2' in account.account_type %}border-green-500{% else %}border-blue-500{% endif %}">
+{% load humanize %}
+{% for account in stockapp_accounts %}
+<div
+    class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 {% if '2' in account.account_type %}border-green-500{% else %}border-blue-500{% endif %}">
     <div class="flex items-center">
         <div
             class="p-3 rounded-full 
