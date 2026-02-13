@@ -1,11 +1,13 @@
 {% load humanize %}
 {% for account in stockapp_accounts %}
+<div
+    class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 {% if 'Checking' in account.account_type %}border-blue-500{% elif 'Savings' in account.account_type %}border-green-500{% elif 'Investment' in account.account_type %}border-yellow-500{% else %}border-gray-500{% endif %}">
 <a href="{% url 'bankaccount:bank_account_detail' account.pk %}"
     class="block bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 hover:cursor-pointer {% if '2' in account.account_type %}border-green-500{% else %}border-blue-500{% endif %}">
     <div class="flex items-center">
         <div
             class="p-3 rounded-full 
-                {% if '2' in account.account_type %}bg-green-100 text-green-600{% else %}bg-blue-100 text-blue-600{% endif %}">
+                {% if 'Checking' in account.account_type %}bg-blue-100 text-blue-600{% elif 'Savings' in account.account_type %}bg-green-100 text-green-600{% elif 'Investment' in account.account_type %}bg-yellow-100 text-yellow-600{% else %}bg-gray-100 text-gray-600{% endif %}">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -14,12 +16,12 @@
         </div>
 
         <div class="ml-4 flex-1">
-            <h2 class="text-gray-600 text-sm font-medium tracking-wider capitalize">
-                {% if '1' in account.account_type %} Checking
-                {% elif '2' in account.account_type %} Savings
-                {% elif '3' in account.account_type %} Investment
-                {% else %} {{ account.account_type }} {% endif %}
-            </h2>
+            <h3 class="text-black text-lg font-medium tracking-tighter capitalize">
+                {{ account.account_name }}
+            </h3>
+            <h3 class="text-gray-600 text-sm font-medium tracking-wider capitalize">
+                {{ account.account_type }}
+            </h3>
             <p class="text-2xl font-bold text-gray-800">${{ account.balance|intcomma }}</p>
 
             <div class="mt-4 flex flex-col gap-2 w-32">
