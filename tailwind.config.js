@@ -2,6 +2,7 @@
 module.exports = {
   content: [
     "./stockapp/templates/**/*.html",
+    "./bankaccount/templates/**/*.html",
   ],
   theme: {
     extend: {},

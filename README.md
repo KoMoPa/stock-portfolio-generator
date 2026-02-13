@@ -2,6 +2,8 @@
 A stock portfolio generator (and mock bank account tracker) developed with Python and Django.
 
 before each session run:
+npm install
+npm run build:css (can leave open in the background for hot css reloading)
 source .venv/bin/activate
 git pull origin main
 pip install > requirements.txt

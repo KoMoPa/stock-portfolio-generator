@@ -8,7 +8,7 @@ class LoginForm(forms.Form):
     password = forms.CharField(max_length=25, required=True, widget=forms.PasswordInput(attrs={'class': 'form-input'}))
 
 class AccountForm(ModelForm):
-    account_type = forms.ChoiceField(required=True, choices=(("1", "Checking"), ("2", "Savings"), ("3", "Investment")))
+    account_type = forms.ChoiceField(required=True, choices=(("Checking", "Checking"), ("Savings", "Savings"), ("Investment", "Investment")))
     account_name = forms.CharField(max_length=35, required=True, widget=forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Account or Institution Name'}))
     balance = forms.DecimalField(decimal_places=2, required=True, widget=forms.NumberInput(attrs={'class': 'form-input', 'placeholder': 'Balance (Can be $0.00'}))
 
