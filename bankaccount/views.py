@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import BankAccount, Transaction
+from .forms import TransactionForm
 from stockapp.forms import AccountForm
 
 # Create your views here.
@@ -53,15 +54,16 @@ def bank_account_deposit(request, pk):
     account = get_object_or_404(BankAccount, pk=pk, user=request.user)
 
     if request.method == 'POST':
-        try:
-            amount = float(request.POST['amount'])
-            account.deposit(amount)
-            messages.success(request, 'Depoitted successfully.')
-            return redirect('bankaccount:bank_account_list')
-        except ValueError:
-            messages.error(request, "Invalid amount.")
-        return redirect('bankaccount:detail', pk=pk)
-    return render(request, 'bankaccount/deposit.html', {'account': account})
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            account.deposit(form.cleaned_data['amount'])
+            messages.success(request, 'Deposit successful.')
+            return redirect('bankaccount:bank_account_detail', pk=pk)
+        else:
+            messages.error(request, 'Invalid amount.')
+    else:
+        form = TransactionForm()
+    return render(request, 'bankaccount/deposit.html', {'account': account, 'form': form})
 
 
 @login_required
@@ -70,16 +72,16 @@ def bank_account_withdraw(request, pk):
     account = get_object_or_404(BankAccount, pk=pk, user=request.user)
 
     if request.method == 'POST':
-        try:
-            amount = float(request.POST['amount'])
-            account.withdrawal(amount)
-            messages.success(request, 'Withdrawed successfully.')
-            return redirect('bankaccount:bank_account_list')
-        except ValueError:
-            messages.error(request, "Invalid amount.")
-            return redirect('bankaccount:deposit', pk=pk)
-        return render(request, 'bankaccount/withdraw.html', {'account': account})
-    return render(request, 'bankaccount/withdraw.html', {'account': account})
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            account.withdrawal(form.cleaned_data['amount'])
+            messages.success(request, 'Withdrawal successful.')
+            return redirect('bankaccount:bank_account_detail', pk=pk)
+        else:
+            messages.error(request, 'Invalid amount.')
+    else:
+        form = TransactionForm()
+    return render(request, 'bankaccount/withdraw.html', {'account': account, 'form': form})
 
 
 @login_required

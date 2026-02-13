@@ -38,4 +38,3 @@ class AccountForm(ModelForm):
         self.fields['account_type'].required = True
         self.fields['balance'].required = True
 
-

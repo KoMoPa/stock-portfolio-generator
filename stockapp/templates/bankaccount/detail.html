@@ -7,9 +7,9 @@
     <p>Created: {{ account.created_at|date:"F j, Y, g:i a" }}</p>
 
     <div class="account-actions">
-        <a href="{% url 'bankaccount:deposit' account.id %}" class="btn">Deposit</a>
-        <a href="{% url 'bankaccount:withdrawal' account.id %}" class="btn">Withdraw</a>
-        <form method="POST" action="{% url 'bankaccount:delete' account.id %}" style="display:inline;">
+        <a href="{% url 'bankaccount:bank_account_deposit' account.id %}" class="btn">Deposit</a>
+        <a href="{% url 'bankaccount:bank_account_withdraw' account.id %}" class="btn">Withdraw</a>
+        <form method="POST" action="{% url 'bankaccount:bank_account_delete' account.id %}" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">Delete Account</button>
         </form>
@@ -32,9 +32,9 @@
                 <td>{{ t.transaction_type }}</td>
                 <td>
                     {% if t.transaction_type == 'DEPOSIT' %}
-                        +${{ t.amount }}
+                    +${{ t.amount }}
                     {% else %}
-                        -${{ t.amount|abs }}
+                    -${{ t.amount }}
                     {% endif %}
                 </td>
             </tr>
@@ -42,7 +42,7 @@
         </tbody>
     </table>
     {% else %}
-        <p>No transactions yet.</p>
+    <p>No transactions yet.</p>
     {% endif %}
 </div>
 {% endblock %}
