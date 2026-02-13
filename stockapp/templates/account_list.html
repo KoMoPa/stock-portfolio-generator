@@ -1,9 +1,7 @@
 {% load humanize %}
 {% for account in stockapp_accounts %}
-<div
-    class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 {% if 'Checking' in account.account_type %}border-blue-500{% elif 'Savings' in account.account_type %}border-green-500{% elif 'Investment' in account.account_type %}border-yellow-500{% else %}border-gray-500{% endif %}">
 <a href="{% url 'bankaccount:bank_account_detail' account.pk %}"
-    class="block bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 hover:cursor-pointer {% if '2' in account.account_type %}border-green-500{% else %}border-blue-500{% endif %}">
+    class="block bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow border-l-4 hover:cursor-pointer {% if 'Checking' in account.account_type %}border-blue-500{% elif 'Savings' in account.account_type %}border-green-500{% elif 'Investment' in account.account_type %}border-yellow-500{% else %}border-gray-500{% endif %}">
     <div class="flex items-center">
         <div
             class="p-3 rounded-full 
